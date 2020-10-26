@@ -1,5 +1,8 @@
 --<20>-hw5-db.sql
-
+--Team 20
+--Eric Tram ewt6
+--Robert Xu rox5
+--Joeseph DAlesandro jrd105
 
 --Assumptions
 
