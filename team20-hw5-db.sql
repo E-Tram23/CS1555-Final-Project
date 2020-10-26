@@ -1,4 +1,5 @@
 --<20>-hw5-db.sql
+
 --Team 20
 --Eric Tram ewt6
 --Robert Xu rox5
@@ -18,28 +19,15 @@ DROP TABLE IF EXISTS RESERVATION_DETAIL CASCADE;
 DROP TABLE IF EXISTS OUT_TIME_INFO CASCADE;
 
 
+
 ---CREATING AIRLINE_INFO TABLE
 CREATE TABLE AIRLINE(
 airline_id   integer NOT NULL,
 airline_name     varchar(50)    NOT NULL,
 airline_abbreviation varchar(10)   NOT NULL,
 year_founded integer,
-CONSTRAINT AIRLINE_PK PRIMARY KEY(airline_id)
-);
-
----CREATING FLIGHT SCHEDULE TABLE
-CREATE TABLE FLIGHT(
-flight_number integer NOT NULL,
-airline_id integer NOT NULL,
-plane_type char(4) NOT NULL,
-departure_city char(3) NOT NULL,
-arrival_city char(3) NOT NULL,
-departure_time varchar(4) NOT NULL,
-arrival_time varchar(4) NOT NULL,
-weekly_schedule varchar(7),
-CONSTRAINT FLIGHT_PK PRIMARY KEY(flight_number),
-CONSTRAINT FLIGHT_FK FOREIGN KEY(plane_type,airline_id) REFERENCES PLANE(plane_type,owner_id),
-CONSTRAINT FLIGHT_FK FOREIGN KEY(airline_id) REFERENCES AIRLINE(airline_id)
+CONSTRAINT AIRLINE_PK PRIMARY KEY(airline_id),
+CONSTRAINT AIRLINE_UQ UNIQUE(airline_abbreviation)
 );
 
 ---CREATING PLANE INFO TABLE
@@ -54,6 +42,21 @@ CONSTRAINT PLANE_PK PRIMARY KEY(plane_type,owner_id),
 CONSTRAINT PLANE_FK FOREIGN KEY(owner_id) REFERENCES AIRLINE(airline_id)
 );
 
+---CREATING FLIGHT SCHEDULE TABLE
+CREATE TABLE FLIGHT(
+flight_number integer NOT NULL,
+airline_id integer NOT NULL,
+plane_type char(4) NOT NULL,
+departure_city char(3) NOT NULL,
+arrival_city char(3) NOT NULL,
+departure_time varchar(4) NOT NULL,
+arrival_time varchar(4) NOT NULL,
+weekly_schedule varchar(7),
+CONSTRAINT FLIGHT_PK PRIMARY KEY(flight_number),
+CONSTRAINT FLIGHT_FK1 FOREIGN KEY(plane_type,airline_id) REFERENCES PLANE(plane_type,owner_id),
+CONSTRAINT FLIGHT_FK2 FOREIGN KEY(airline_id) REFERENCES AIRLINE(airline_id)
+);
+
 ---CREATING FLIGHT PRICING TABLE
 CREATE TABLE PRICE(
 departure_city char(3) NOT NULL,
@@ -63,8 +66,8 @@ high_price integer NOT NULL,
 low_price integer NOT NULL,
 CONSTRAINT PRICE_PK PRIMARY KEY(departure_city,arrival_city),
 CONSTRAINT PRICE_FK FOREIGN KEY(airline_id) REFERENCES AIRLINE(airline_id),
-CONSTRAINT POSITIVE CHECK (high_price > 0),
-CONSTRAINT POSITIVE CHECK (low_price > 0)
+CONSTRAINT POSITIVE_HP CHECK (high_price > 0),
+CONSTRAINT POSITIVE_LP CHECK (low_price > 0)
 );
 
 ---CREATING CUSTOMER INFO TABLE
@@ -82,7 +85,8 @@ phone varchar(10) NOT NULL,
 email varchar(30) NOT NULL,
 frequent_miles varchar(10) NOT NULL,
 CONSTRAINT CUSTOMER_PK PRIMARY KEY(cid),
-CONSTRAINT CUSTOMER_FK FOREIGN KEY(frequent_miles) REFERENCES AIRLINE(airline_abbreviation)
+CONSTRAINT CUSTOMER_FK FOREIGN KEY(frequent_miles) REFERENCES AIRLINE(airline_abbreviation),
+CONSTRAINT CUSTOMER_UQ UNIQUE(credit_card_num)
 );
 
 
@@ -95,8 +99,8 @@ credit_card_num varchar(16) NOT NULL,
 reservation_date timestamp NOT NULL,
 ticketed boolean NOT NULL,
 CONSTRAINT RESERVATION_PK PRIMARY KEY(reservation_number),
-CONSTRAINT RESERVATION_FK FOREIGN KEY(cid) REFERENCES CUSTOMER(cid),
-CONSTRAINT RESERVATION_FK FOREIGN KEY(credit_card_num) REFERENCES CUSTOMER(credit_card_num),
+CONSTRAINT RESERVATION_FK1 FOREIGN KEY(cid) REFERENCES CUSTOMER(cid),
+CONSTRAINT RESERVATION_FK2 FOREIGN KEY(credit_card_num) REFERENCES CUSTOMER(credit_card_num),
 CONSTRAINT POSITIVE CHECK (cost > 0)
 );
 
@@ -108,8 +112,8 @@ flight_number integer NOT NULL,
 flight_date timestamp NOT NULL,
 leg integer NOT NULL,
 CONSTRAINT RESERVATION_DETAIL_PK PRIMARY KEY(reservation_number, leg),
-CONSTRAINT RESERVATION_DETAIL_FK FOREIGN KEY(reservation_number) REFERENCES RESERVATION(reservation_number),
-CONSTRAINT RESERVATION_DETAIL_FK FOREIGN KEY(flight_number) REFERENCES FLIGHT(flight_number)
+CONSTRAINT RESERVATION_DETAIL_FK1 FOREIGN KEY(reservation_number) REFERENCES RESERVATION(reservation_number),
+CONSTRAINT RESERVATION_DETAIL_FK2 FOREIGN KEY(flight_number) REFERENCES FLIGHT(flight_number)
 );
 
 --AUXILLARY TABLE
