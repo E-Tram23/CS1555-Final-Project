@@ -8,6 +8,29 @@
 
 --FUNCTIONS
 
+--Task 2 getCancellationTime
+
+--assuming must cancel 12 hours before flight_date of first leg of the trip
+CREATE OR REPLACE FUNCTION getCancellationTime(reservation_number integer)
+RETURNS timestamp
+AS $$
+DECLARE
+    cancel_time timestamp;
+    cancel_window interval = '12 hours';
+BEGIN
+    SELECT (flight_date - cancel_window) INTO cancel_time
+    FROM RESERVATION_DETAIL
+    WHERE RESERVATION_DETAIL.reservation_number = $1 AND leg = 1;
+
+    RETURN cancel_time;
+END;
+$$ LANGUAGE plpgsql;
+
+--TESTING
+SELECT getCancellationTime(1);
+
+
+
 --Task 3 isPlaneFull
 
 CREATE OR REPLACE FUNCTION isPlaneFull(f_number integer)
