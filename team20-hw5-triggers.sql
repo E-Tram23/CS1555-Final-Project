@@ -131,12 +131,7 @@ END
 $$
 LANGUAGE PLPGSQL;
 
- CREATE TRIGGER cancelReservation
-    BEFORE UPDATE
-    ON RESERVATION
-    FOR EACH ROW
-    WHEN (NEW.reservation_number IS NOT NULL AND getCancellationTime(NEW.reservation_number) = localtimestamp)
-    EXECUTE FUNCTION cancelReservationFunc(reservation_number);                                                       
+                                                      
 
 --Grab timestamp helper function
 CREATE OR REPLACE FUNCTION getTimestamp() RETURNS timestamp AS
@@ -150,7 +145,13 @@ end;
 $$
 LANGUAGE PLPGSQL;
 
-
+--Trigger 6
+ CREATE TRIGGER cancelReservation
+    BEFORE UPDATE
+    ON RESERVATION
+    FOR EACH ROW
+    WHEN (NEW.reservation_number IS NOT NULL AND getCancellationTime(NEW.reservation_number) = getTimestamp())
+    EXECUTE FUNCTION cancelReservationFunc(reservation_number);                                                       
 
 
 -- Attempt 2, task 6 --
