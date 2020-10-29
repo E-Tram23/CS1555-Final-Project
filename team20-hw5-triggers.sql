@@ -148,10 +148,8 @@ LANGUAGE PLPGSQL;
 --Trigger 6
  CREATE TRIGGER cancelReservation
     BEFORE UPDATE
-    ON RESERVATION
-    FOR EACH ROW
-    WHEN (NEW.reservation_number IS NOT NULL AND getCancellationTime(NEW.reservation_number) = getTimestamp())
-    EXECUTE FUNCTION cancelReservationFunc(reservation_number);                                                       
+    ON OURTIMESTAMP
+    EXECUTE FUNCTION cancelReservationFunc();                                                       
 
 
 -- Attempt 2, task 6 --
