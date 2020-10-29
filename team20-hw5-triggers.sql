@@ -138,8 +138,17 @@ LANGUAGE PLPGSQL;
     WHEN (NEW.reservation_number IS NOT NULL AND getCancellationTime(NEW.reservation_number) = localtimestamp)
     EXECUTE FUNCTION cancelReservationFunc(reservation_number);                                                       
 
-
-
+--Grab timestamp helper function
+CREATE OR REPLACE FUNCTION getTimestamp() RETURNS timestamp AS
+$$
+DECLARE
+    ts timestamp;
+BEGIN
+    SELECT c_timestamp from OURTIMESTAMP into ts;
+    RETURN ts;
+end;
+$$
+LANGUAGE PLPGSQL;
 
 
 
