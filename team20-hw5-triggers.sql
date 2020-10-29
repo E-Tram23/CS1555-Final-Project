@@ -138,6 +138,51 @@ $$
 LANGUAGE PLPGSQL;
 
 
-                                                    
-                                                       
+-- Attempt 2, trigger 6
+DROP TRIGGER IF EXISTS cancelReservation ON reservation;
+
+CREATE TRIGGER cancelReservation
+AFTER INSERT OR UPDATE
+ON reservation
+EXECUTE PROCEDURE cancelAndDowngrade();
+
+CREATE OR REPLACE PROCEDURE cancelAndDowngrade()
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    curr_time timestamp := NOW();
+    var RECORD;
+    var2 RECORD;
+BEGIN;
+    --remove reservations that are not ticketed at or after cancellation time has past
+    begin;
+    DELETE
+    FROM reservation r
+    USING reservation_detail rd
+    WHERE r.reservation_number = rd.reservation_number
+    AND r.ticketed = FALSE
+    AND curr_time >= getcancellationtime(r.reservation_number);
+    end;
+
+
+--for each flight number/flight, downgrade flight if passanger count can fit into smaller plane
+FOR var IN
+        SELECT flight_number, count(*) as passenger_count
+        FROM reservation_detail
+        GROUP BY flight_number
+        loop
+            for var2 IN
+                SELECT *
+                FROM plane p
+                ORDER BY plane_capacity
+            loop
+                if var.passenger_count <= var2.plane_capacity then
+                    UPDATE flight as f SET plane_type = var2.plane_type WHERE f.flight_number = var.flight_number;
+                    Exit;
+                end if;
+            end loop;
+        end loop;
+END
+$$ LANGUAGE plpgsql;
+
                                                         
