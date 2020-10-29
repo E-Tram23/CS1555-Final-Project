@@ -97,3 +97,47 @@ BEGIN;
 SET CONSTRAINTS ALL DEFERRED;
 CALL makeReservation(11, 7, TO_DATE('11-23-2020','MM-DD-YYYY'),1);
 COMMIT;
+     
+                                                        
+                                                        
+ --Trigger 6 *NOT FULLY WORKING YET **
+ --The Trigger Number 6
+
+CREATE TRIGGER cancelReservation
+    BEFORE UPDATE
+    ON RESERVATION
+    FOR EACH ROW
+    WHEN (NEW.reservation_number IS NOT NULL AND getCancellationTime(NEW.reservation_number) = localtimestamp)
+    EXECUTE FUNCTION cancelReservationFunc(reservation_number);
+
+
+CREATE OR REPLACE FUNCTION cancelReservationFunc() RETURNS trigger AS
+$$
+DECLARE
+    ticketbool boolean;
+    capacity_order integer;
+BEGIN
+
+    SELECT ticketed into ticketbool
+    FROM RESERVATION
+         INNER JOIN RESERVATION_DETAIL RD on RESERVATION.reservation_number = RD.reservation_number
+         INNER JOIN FLIGHT F on RD.flight_number = F.flight_number;
+
+    IF(ticketbool = false) THEN
+
+        DELETE FROM RESERVATION
+        WHERE reservation_number = tg_argv;
+
+        DELETE FROM RESERVATION_DETAIL
+        WHERE reservation_number = tg_argv;
+
+    end if;
+
+END
+$$
+LANGUAGE PLPGSQL;
+
+
+                                                    
+                                                       
+                                                        
