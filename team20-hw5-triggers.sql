@@ -103,12 +103,6 @@ COMMIT;
  --Trigger 6 *NOT FULLY WORKING YET **
  --The Trigger Number 6
 
-CREATE TRIGGER cancelReservation
-    BEFORE UPDATE
-    ON RESERVATION
-    FOR EACH ROW
-    WHEN (NEW.reservation_number IS NOT NULL AND getCancellationTime(NEW.reservation_number) = localtimestamp)
-    EXECUTE FUNCTION cancelReservationFunc(reservation_number);
 
 
 CREATE OR REPLACE FUNCTION cancelReservationFunc() RETURNS trigger AS
@@ -137,6 +131,12 @@ END
 $$
 LANGUAGE PLPGSQL;
 
+ CREATE TRIGGER cancelReservation
+    BEFORE UPDATE
+    ON RESERVATION
+    FOR EACH ROW
+    WHEN (NEW.reservation_number IS NOT NULL AND getCancellationTime(NEW.reservation_number) = localtimestamp)
+    EXECUTE FUNCTION cancelReservationFunc(reservation_number);                                                       
 
 -- Attempt 2, trigger 6
 DROP TRIGGER IF EXISTS cancelReservation ON reservation;
