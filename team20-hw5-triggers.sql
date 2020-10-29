@@ -138,7 +138,13 @@ LANGUAGE PLPGSQL;
     WHEN (NEW.reservation_number IS NOT NULL AND getCancellationTime(NEW.reservation_number) = localtimestamp)
     EXECUTE FUNCTION cancelReservationFunc(reservation_number);                                                       
 
--- Attempt 2, trigger 6
+
+
+
+
+
+
+-- Attempt 2, task 6 --
 DROP TRIGGER IF EXISTS cancelReservation ON reservation;
 
 CREATE TRIGGER cancelReservation
