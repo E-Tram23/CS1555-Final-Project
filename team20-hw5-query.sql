@@ -27,7 +27,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 --TESTING
-SELECT getCancellationTime(1);
+SELECT getCancellationTime(3);
 
 
 

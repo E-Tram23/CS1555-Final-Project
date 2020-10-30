@@ -7,6 +7,8 @@
 
 --Task 5 planeUpgrade
 
+
+
 CREATE OR REPLACE FUNCTION planeUpgradeFunc() RETURNS trigger AS
 $$
 DECLARE
@@ -97,41 +99,7 @@ BEGIN;
 SET CONSTRAINTS ALL DEFERRED;
 CALL makeReservation(11, 7, TO_DATE('11-23-2020','MM-DD-YYYY'),1);
 COMMIT;
-     
-                                                        
-                                                        
- --Trigger 6 *NOT FULLY WORKING YET **
- --The Trigger Number 6
 
-
-
-CREATE OR REPLACE FUNCTION cancelReservationFunc() RETURNS trigger AS
-$$
-DECLARE
-    ticketbool boolean;
-    capacity_order integer;
-BEGIN
-
-    SELECT ticketed into ticketbool
-    FROM RESERVATION
-         INNER JOIN RESERVATION_DETAIL RD on RESERVATION.reservation_number = RD.reservation_number
-         INNER JOIN FLIGHT F on RD.flight_number = F.flight_number;
-
-    IF(ticketbool = false) THEN
-
-        DELETE FROM RESERVATION
-        WHERE reservation_number = tg_argv;
-
-        DELETE FROM RESERVATION_DETAIL
-        WHERE reservation_number = tg_argv;
-
-    end if;
-
-END
-$$
-LANGUAGE PLPGSQL;
-
-                                                      
 
 --Grab timestamp helper function
 CREATE OR REPLACE FUNCTION getTimestamp() RETURNS timestamp AS
@@ -145,59 +113,94 @@ end;
 $$
 LANGUAGE PLPGSQL;
 
---Trigger 6
- CREATE TRIGGER cancelReservation
-    BEFORE UPDATE
-    ON OURTIMESTAMP
-    EXECUTE FUNCTION cancelReservationFunc();                                                       
-
-
 -- Attempt 2, task 6 --
-DROP TRIGGER IF EXISTS cancelReservation ON reservation;
+/*DROP TRIGGER IF EXISTS cancelReservation ON reservation;
 
 CREATE TRIGGER cancelReservation
 AFTER INSERT OR UPDATE
 ON reservation
-EXECUTE PROCEDURE cancelAndDowngrade();
+EXECUTE PROCEDURE cancelAndDowngrade();*/
 
-CREATE OR REPLACE PROCEDURE cancelAndDowngrade()
-LANGUAGE plpgsql
-AS $$
+--Trigger 6 -- attempt 3 --
+CREATE OR REPLACE FUNCTION cancelReservationFunc() RETURNS trigger AS
+$$
 DECLARE
-    curr_time timestamp := NOW();
-    var RECORD;
-    var2 RECORD;
-BEGIN;
-    --remove reservations that are not ticketed at or after cancellation time has past
-    begin;
-    DELETE
-    FROM reservation r
-    USING reservation_detail rd
-    WHERE r.reservation_number = rd.reservation_number
-    AND r.ticketed = FALSE
-    AND curr_time >= getcancellationtime(r.reservation_number);
+BEGIN
+    --delete passengers
+    DROP MATERIALIZED VIEW IF EXISTS reservationsToCancel;
+    create MATERIALIZED view reservationsToCancel AS
+    select reservation_number
+    from reservation
+    where ticketed = false AND getCancellationTime(reservation_number) < getTimestamp();
+
+    begin
+    DELETE FROM reservation_detail WHERE reservation_number IN (SELECT * FROM reservationstocancel);
+    -- delete from reservation
+    -- where reservation.reservation_number exists in reservationsToCancel.reservation_number
+
+    DELETE FROM reservation WHERE reservation_number IN (SELECT * FROM reservationstocancel);
+    -- delete from reservation_detail
+    -- where reservation_detail.reservation_number exists in reservationsToCancel.reservation_number
     end;
-
-
---for each flight number/flight, downgrade flight if passanger count can fit into smaller plane
-FOR var IN
-        SELECT flight_number, count(*) as passenger_count
-        FROM reservation_detail
-        GROUP BY flight_number
-        loop
-            for var2 IN
-                SELECT *
-                FROM plane p
-                ORDER BY plane_capacity
-            loop
-                if var.passenger_count <= var2.plane_capacity then
-                    UPDATE flight as f SET plane_type = var2.plane_type WHERE f.flight_number = var.flight_number;
-                    Exit;
-                end if;
-            end loop;
-        end loop;
+    RETURN NULL;
 END
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE PLPGSQL;
 
-                                                        
--- attempt 3 --
+
+
+CREATE OR REPLACE FUNCTION downgradePlaneFunc() RETURNS trigger AS
+$$
+DECLARE
+    airID integer;
+    planeType char(4);
+BEGIN
+    --get flight_number from old
+    --get flight with flight_number
+    --raise exception 'planetype null';
+
+    --get airline_id from flight
+    SELECT airline_id INTO airID
+    FROM flight
+    WHERE flight.flight_number = OLD.flight_number;
+
+    --get all plane_type, plane_capacity with that airline_id and plane_capacity >= pass_count
+    --get plane_type with min(capacity)
+
+    SELECT plane.plane_type INTO planeType
+    FROM
+    (SELECT min(p.plane_capacity) as min_plane_capacity
+    FROM (SELECT plane_capacity, owner_id
+    FROM plane p
+    JOIN (SELECT count(flight_number) as pass_count FROM RESERVATION_DETAIL rd
+    WHERE rd.flight_number = OLD.flight_number) as pc
+    ON pc.pass_count <= p.plane_capacity) as p
+    WHERE p.owner_id = airID) as c
+    LEFT JOIN plane ON plane.plane_capacity = c.min_plane_capacity;
+
+    if planeType is not null then
+        UPDATE flight SET plane_type = planeType WHERE flight.flight_number = OLD.flight_number;
+    end if;
+
+
+
+    RETURN NULL;
+END $$ LANGUAGE PLPGSQL;
+
+-- triggers
+
+DROP TRIGGER IF EXISTS downgradePlane ON reservation_detail;
+CREATE TRIGGER downgradePlane
+    AFTER DELETE
+    ON reservation_detail
+    FOR EACH ROW
+    EXECUTE FUNCTION downgradePlaneFunc();
+
+DROP TRIGGER IF EXISTS cancelReservation ON ourtimestamp;
+CREATE TRIGGER cancelReservation
+    AFTER INSERT OR UPDATE
+    ON OURTIMESTAMP
+    FOR EACH ROW
+    EXECUTE FUNCTION cancelReservationFunc();
+-- for triggers
+DELETE FROM ourtimestamp WHERE c_timestamp is not NULL;
+INSERT INTO ourtimestamp(c_timestamp) VALUES('2020-12-04 20:30:38.000000');

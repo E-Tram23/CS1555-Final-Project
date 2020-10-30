@@ -18,6 +18,7 @@ INSERT INTO PLANE(plane_type, manufacturer, plane_capacity, last_service, year, 
 INSERT INTO PLANE(plane_type, manufacturer, plane_capacity, last_service, year, owner_id) VALUES('B737', 'Boeing',125,TO_DATE('09-09-2020','MM-DD-YYYY'),2006,3);
 INSERT INTO PLANE(plane_type, manufacturer, plane_capacity, last_service, year, owner_id) VALUES('E145', 'Embraer',50,TO_DATE('06-15-2020','MM-DD-YYYY'),2018,4);
 INSERT INTO PLANE(plane_type, manufacturer, plane_capacity, last_service, year, owner_id) VALUES('B777', 'Boeing',368,TO_DATE('09-16-2020','MM-DD-YYYY'),1995,5);
+INSERT INTO PLANE(plane_type, manufacturer, plane_capacity, last_service, year, owner_id) VALUES('SMAL', 'Boeing',20,TO_DATE('09-16-2020','MM-DD-YYYY'),1995,3);
 
 INSERT INTO FLIGHT(FLIGHT_NUMBER, AIRLINE_ID, PLANE_TYPE, DEPARTURE_CITY, ARRIVAL_CITY, DEPARTURE_TIME, ARRIVAL_TIME, WEEKLY_SCHEDULE) VALUES(1,1,'A320','PIT','JFK','1355','1730','SMTWTFS');
 INSERT INTO FLIGHT(FLIGHT_NUMBER, AIRLINE_ID, PLANE_TYPE, DEPARTURE_CITY, ARRIVAL_CITY, DEPARTURE_TIME, ARRIVAL_TIME, WEEKLY_SCHEDULE) VALUES(2,2,'E175','JFK','LAX','0825','1845','-MTWTFS');
